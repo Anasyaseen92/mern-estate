@@ -11,7 +11,7 @@ mongoose.connect("mongodb+srv://anas:anas123456@mern-estate-cluster0.qvkxhyt.mon
     console.log("Chlda pya a");
     // Add another log after the connection is successful
     console.log("MongoDB connection successful!");
-  })
+  }) 
   .catch((err) => {
     console.error("MongoDB connection failed:", err);
     console.error("Error Details:", err.stack);
