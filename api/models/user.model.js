@@ -15,7 +15,12 @@ password:{
     type:String,
     required:true,
     
-},
+}, 
+avatar:{
+    type:String,
+    default:"https://wallpapers.com/images/file/cute-profile-picture-diw8fgkjdz6fq6k7.jpg"
+}
+
 },
 {timestamps:true});
 

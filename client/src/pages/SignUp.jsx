@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import {Link ,Navigate,useNavigate} from 'react-router-dom'
+import OAuth from "../components/OAuth";
 function SignUp() {
   const [formData, setformData]=useState({});
   const [error, seterror]=useState(null);
@@ -11,34 +12,42 @@ function SignUp() {
       [e.target.id]: e.target.value,
     })
   };
- const handleSubmit= async(e)=>{
+const handleSubmit = async (e) => {
   e.preventDefault();
+
+  if (!formData.username || !formData.email || !formData.password) {
+    seterror("All fields are required");
+    return;
+  }
+
   try {
     setLoading(true);
-    const res= await fetch('api/auth/signup',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json'
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
       },
-      body:JSON.stringify(formData),
-    })
+      body: JSON.stringify(formData),
+    });
+
     const data = await res.json();
     console.log(data);
-    if(data.succuss==false){
+
+    if (data.success === false) {
       setLoading(false);
       seterror(data.message);
       return;
     }
+
     setLoading(false);
     seterror(null);
     navigate('/sign-in');
   } catch (error) {
     setLoading(false);
-      seterror(error.message);
+    seterror(error.message);
   }
- 
+};
 
- }
  
   return (
     <div className="p-3 max-w-lg mx-auto">
@@ -72,6 +81,7 @@ function SignUp() {
         
         {loading ? 'loading...': 'Sign Up'} 
         </button>
+       <OAuth/>
       </form>
       <div className="flex mt-5 gap-2">
         <p>Have an account?</p>
