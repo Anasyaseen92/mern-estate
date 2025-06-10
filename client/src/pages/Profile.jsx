@@ -1,15 +1,44 @@
-import { useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useRef, useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { supabase } from '../supabaseClient';
+import {
+  updateUserFailure,
+  updateUserStart,
+  updateUserSuccess,
+} from '../redux/user/userSlice';
 
 function Profile() {
   const fileRef = useRef(null);
   const { currentUser } = useSelector((state) => state.user);
-  const [avatarUrl, setAvatarUrl] = useState(currentUser?.avatar || '');
+  const dispatch = useDispatch();
+
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+  });
+
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
+
+  // Load user data into form
+  useEffect(() => {
+    console.log('CurrentUser from Redux:', currentUser); 
+    if (currentUser) {
+      setFormData({
+        username: currentUser.username || '',
+        email: currentUser.email || '',
+        password: '',
+      });
+      setAvatarUrl(currentUser.avatar || '');
+    }
+  }, [currentUser]);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -17,31 +46,18 @@ function Profile() {
 
     setUploadSuccess(false);
     setUploadError('');
-    setUploadProgress(0);
     setUploading(true);
 
     const fileName = `${Date.now()}_${file.name}`;
 
-    // Use Supabase's upload with onUploadProgress callback
     const { data, error } = await supabase.storage
       .from('profile')
-      .upload(fileName, file, {
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percent = Math.round(
-              (progressEvent.loaded / progressEvent.total) * 100
-            );
-            setUploadProgress(percent);
-          }
-        },
-      });
-
-    setUploading(false);
+      .upload(fileName, file);
 
     if (error) {
-      console.error('Upload failed:', error);
-      setUploadError('Upload failed. Please try again.');
-      setUploadSuccess(false);
+      console.error('Upload error:', error.message);
+      setUploadError('Upload failed');
+      setUploading(false);
       return;
     }
 
@@ -50,22 +66,58 @@ function Profile() {
       .getPublicUrl(fileName);
 
     setAvatarUrl(publicUrlData.publicUrl);
+    setUploading(false);
     setUploadSuccess(true);
 
-    // Hide success message after 5 seconds
     setTimeout(() => {
       setUploadSuccess(false);
       setUploadError('');
-      setUploadProgress(0);
-    }, 5000);
+    }, 4000);
+  };
 
-    console.log('Public URL:', publicUrlData.publicUrl);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const userId = currentUser?._id;
+    if (!userId) {
+      console.error('No user or missing ID');
+      dispatch(updateUserFailure('User not authenticated or missing ID'));
+      return;
+    }
+
+    dispatch(updateUserStart());
+
+    try {
+      const res = await fetch(`/api/user/update/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...formData,
+          avatar: avatarUrl,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        dispatch(updateUserFailure(data.message || 'Update failed'));
+        return;
+      }
+
+      // 👇 Only pass `data.user` to Redux store
+      dispatch(updateUserSuccess(data.user));
+    } catch (error) {
+      dispatch(updateUserFailure(error.message));
+    }
   };
 
   return (
     <div className="p-4 max-w-md mx-auto bg-white rounded-md shadow-md mt-8">
       <h1 className="text-2xl font-semibold text-center mb-6">Profile</h1>
-      <form className="flex flex-col gap-3">
+      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
         <input
           type="file"
           ref={fileRef}
@@ -75,52 +127,43 @@ function Profile() {
         />
         <img
           onClick={() => fileRef.current.click()}
-          src={
-            avatarUrl ||
-            'https://via.placeholder.com/100x100?text=Upload' // fallback
-          }
+          src={avatarUrl || '/placeholder.png'}
           alt="profile"
           className="rounded-full h-20 w-20 object-cover cursor-pointer self-center mb-2"
         />
-        {/* Show progress or messages */}
-        {uploading && (
-          <p className="text-blue-600 text-center mb-2">
-            Uploading... {uploadProgress}%
-          </p>
-        )}
-        {uploadSuccess && !uploading && (
-          <p className="text-green-600 text-center mb-2">
-            Profile uploaded successfully
-          </p>
-        )}
-        {uploadError && !uploading && (
-          <p className="text-red-600 text-center mb-2">{uploadError}</p>
-        )}
+        {uploading && <p className="text-blue-600 text-center">Uploading...</p>}
+        {uploadSuccess && <p className="text-green-600 text-center">Uploaded successfully!</p>}
+        {uploadError && <p className="text-red-600 text-center">{uploadError}</p>}
+
         <input
+          name="username"
           type="text"
           placeholder="username"
           className="border p-2 rounded-md text-sm"
+          value={formData.username}
+          onChange={handleChange}
         />
         <input
+          name="email"
           type="email"
           placeholder="email"
-          id="email"
           className="border p-2 rounded-md text-sm"
+          value={formData.email}
+          onChange={handleChange}
         />
         <input
+          name="password"
           type="password"
           placeholder="password"
-          id="password"
           className="border p-2 rounded-md text-sm"
+          value={formData.password}
+          onChange={handleChange}
         />
+
         <button className="bg-slate-700 text-white rounded-md p-2 text-sm mt-2 hover:bg-slate-800 transition">
           Update Profile
         </button>
       </form>
-      <div className="flex justify-between mt-4 text-sm">
-        <span className="text-red-700 cursor-pointer hover:underline">Delete</span>
-        <span className="text-red-700 cursor-pointer hover:underline">Sign out</span>
-      </div>
     </div>
   );
 }
