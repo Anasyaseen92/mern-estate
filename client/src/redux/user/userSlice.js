@@ -48,6 +48,21 @@ state.error= action.payload;
 state.loading= false;
         },
 
+
+
+        signOutUserStart :(state)=>{
+state.loading= true;
+        },
+        signOutUserSuccess:(state)=>{
+state.currentUser=null;
+state.loading= false;
+state.error=null;
+        }, 
+       signOutUserFailure:(state , action)=>{
+state.error= action.payload;
+state.loading= false;
+        },
+
     }
 });
 
@@ -59,5 +74,8 @@ state.loading= false;
      updateUserFailure,
     deleteUserStart,
 deleteUserSuccess,
-deleteUserFailure}=userSlice.actions;
+deleteUserFailure,
+signOutUserFailure,
+signOutUserStart,
+signOutUserSuccess}=userSlice.actions;
  export default userSlice.reducer;

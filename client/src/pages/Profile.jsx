@@ -5,6 +5,9 @@ import {
   deleteUserFailure,
   deleteUserStart,
   deleteUserSuccess,
+  signOutUserFailure,
+  signOutUserStart,
+  signOutUserSuccess,
   updateUserFailure,
   updateUserStart,
   updateUserSuccess,
@@ -144,14 +147,22 @@ function Profile() {
 
   const handleSignOut = async () => {
     try {
-      await fetch('/api/auth/signout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-      navigate('/login');
-    } catch (err) {
-      console.error('Signout error:', err);
-    }
+      dispatch(signOutUserStart());
+     const res= await fetch('/api/auth/signout',{
+  method: 'GET',
+  credentials: 'include',
+}
+      
+     );
+     const data = await res.json();
+     if(data.success==false){
+      dispatch(signOutUserFailure(data.message));
+      return ;
+     }
+     dispatch(signOutUserSuccess(data));
+      navigate('/');
+    } catch (error) {
+dispatch(signOutUserFailure(error.message));    }
   };
 
   return (
@@ -206,7 +217,7 @@ function Profile() {
 
         <div className="flex justify-between mt-5">
           <span onClick={handleDeleteUser} className='text-red-700 cursor-pointer'>Delete Account</span>
-          <span  className='text-red-700 cursor-pointer'>Sign Out</span>
+          <span onClick={handleSignOut} className='text-red-700 cursor-pointer'>Sign Out</span>
         </div>
       </form>
     </div>
