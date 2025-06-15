@@ -19,6 +19,8 @@ function Profile() {
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [showListingError, setShowListingError] = useState(false);
+  const [userListings, setUserListings] = useState([]);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -31,7 +33,6 @@ function Profile() {
   const [uploadError, setUploadError] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  // Load user data into form
   useEffect(() => {
     if (currentUser) {
       setFormData({
@@ -141,7 +142,7 @@ function Profile() {
       }
 
       dispatch(deleteUserSuccess(data));
-      navigate("/"); // redirect after delete
+      navigate("/");
     } catch (error) {
       dispatch(deleteUserFailure(error.message));
     }
@@ -163,6 +164,40 @@ function Profile() {
       navigate("/");
     } catch (error) {
       dispatch(signOutUserFailure(error.message));
+    }
+  };
+
+  const handleShowListings = async () => {
+    try {
+      setShowListingError(false);
+      const res = await fetch(`/api/user/listings/${currentUser._id}`);
+      const data = await res.json();
+      console.log("Fetched Listings Data:", data);
+      if (data.success === false) {
+        setShowListingError(true);
+        return;
+      }
+      setUserListings(data);
+    } catch (error) {
+      setShowListingError(true);
+    }
+  };
+
+  const handleListingDelete = async (listingId) => {
+    try {
+      const res = await fetch(`/api/listing/delete/${listingId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success === false) {
+        console.log(data.message);
+        return;
+      }
+      setUserListings((prev) =>
+        prev.filter((listing) => listing._id !== listingId)
+      );
+    } catch (error) {
+      console.log(error.message);
     }
   };
 
@@ -237,6 +272,55 @@ function Profile() {
             Sign Out
           </span>
         </div>
+
+        <button
+          className="w-full text-green-700"
+          type="button"
+          onClick={handleShowListings}
+        >
+          Show Listing
+        </button>
+
+        <p className="text-red-700 mt-5">
+          {showListingError ? "Error showing listings" : ""}
+        </p>
+
+        {userListings && userListings.length > 0 && (
+          <div className="flex flex-col gap-4">
+            <h1 className="text-center mt-7 text-2xl font-semibold">
+              Your Listings
+            </h1>
+            {userListings.map((listing) => (
+              <div
+                className="border rounded-lg p-3 flex justify-between items-center gap-4"
+                key={listing._id}
+              >
+                <Link to={`/listing/${listing._id}`}>
+                  <img
+                    src={listing.imageUrls[0]}
+                    alt="listing cover"
+                    className="h-16 w-16 object-contain"
+                  />
+                </Link>
+                <Link
+                  className="text-slate-700 font-semibold hover:underline truncate flex-1"
+                  to={`/listing/${listing._id}`}
+                >
+                  <p>{listing.name}</p>
+                </Link>
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={() => handleListingDelete(listing._id)}
+                    className="text-red-700 uppercase"
+                  >
+                    Delete
+                  </button>
+                  <button className="text-green-700 uppercase">Edit</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </form>
     </div>
   );
