@@ -9,6 +9,7 @@ import Header from './components/Header';
 import PrivRoute from './components/PrivRoute';
 import CreateListing from './pages/CreateListing';
 import UpdateListing from './pages/UpdateListing';
+import Listing from './pages/Listing';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
   <Route path='/sign-in' element={<SignIn />} />
   <Route path='/sign-up' element={<SignUp />} />
   <Route path='/about' element={<About />} />
+  <Route path='/listing/:listingId' element={<Listing />} />
 
   {/* Protected Routes */}
   <Route element={<PrivRoute />}>
