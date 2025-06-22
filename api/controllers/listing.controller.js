@@ -1,6 +1,6 @@
 import Listing from "../models/listing.model.js";
 import { errorHandler } from "../utils/error.js";
-
+import ListingModel from "../models/listing.model.js";
 export const createListing = async (req, res, next) => {
   try {
     const listing = await Listing.create(req.body);
@@ -53,7 +53,7 @@ export const getListing = async (req, res , next)=>{
     next(error);
   }
 }
- export const getListings = async (req, res, next) => {
+export const getListings = async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 9;
     const startIndex = parseInt(req.query.startIndex) || 0;
@@ -82,7 +82,7 @@ export const getListing = async (req, res , next)=>{
     const sort = req.query.sort || "createdAt";
     const order = req.query.order || "desc";
 
-    const listings = await listingModel
+    const listings = await ListingModel
       .find({
         name: { $regex: searchTerm, $options: "i" },
         offer: offer,
@@ -96,7 +96,7 @@ export const getListing = async (req, res , next)=>{
       .limit(limit)
       .skip(startIndex);
 
-      res.status(200).json(listings);
+    res.status(200).json(listings);
   } catch (e) {
     next(e);
   }
