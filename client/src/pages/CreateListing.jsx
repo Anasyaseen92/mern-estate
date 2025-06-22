@@ -20,8 +20,8 @@ export default function CreateListing() {
     address: "",
     regularPrice: 50,
     discountPrice: 50,
-    bathRooms: 1,
-    bedRooms: 1,
+    bathRooms: 0,
+    bedRooms: 0,
     furnished: false,
     parking: false,
     type: "rent",
@@ -269,8 +269,8 @@ export default function CreateListing() {
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                id="bedrooms"
-                min="1"
+                id="bedRooms"
+                min="0"
                 max="10"
                 required
                 className="p-3 border border-gray-300 rounded-lg"
@@ -283,8 +283,8 @@ export default function CreateListing() {
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                id="bathrooms"
-                min="1"
+                id="bathRooms"
+                min="0"
                 max="10"
                 required
                 className="p-3 border border-gray-300 rounded-lg"
